@@ -33,10 +33,13 @@ def cards(kind):
 
 
 def row(c, kind):
-    """자리배열 꼴 — play.html 이 예전에 들고 있던 그 차례."""
+    """자리배열 꼴 — play.html 이 예전에 들고 있던 그 차례.
+
+    기체만 뒤에 형식번호(9)와 지형 적성(10)이 붙는다. serAll 이 뒤에서부터
+    배열을 찾아 시리즈를 잡으므로, 문자열과 사전은 그 자리를 가리지 않는다."""
     r = [c["name"], c["factions"]] + list(c["stats"]) + [c["temper"]]
     if kind == "mech":
-        return r + [c["system"], c["series"], c.get("models", "")]
+        return r + [c["system"], c["series"], c.get("models", ""), c.get("terrain")]
     if kind == "pilot":
         return r + [c["psy"], c["series"], c.get("line", "")]
     return r + [c["series"]]

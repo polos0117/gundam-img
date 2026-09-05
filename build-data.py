@@ -22,9 +22,12 @@ V건담/빅토리 건담 처럼 열 장이 그렇게 생겼다. 형식번호가 
     python3 build-data.py --report   # 두 출처가 엇갈리는 자리를 전부 찍는다
 """
 import argparse
+import collections
 import importlib.util
 import json
 import os
+import re
+import statistics
 
 import roster
 from gundam_match import norm, affixes
@@ -144,6 +147,59 @@ def from_official(idx):
     return out
 
 
+def fill_terrain(mech, override=None):
+    """지형 적성이 없는 카드를 메운다.
+
+    소샤지에 실린 466 기는 그쪽 값을 쓰고, 나머지 322 기는 세 단계로 메운다.
+    형식번호가 같은 카드 → 이름 계보가 이어지는 카드 → 계열 중앙값.
+
+    계열 중앙값이 그럴듯한 것은 실제로 갈리기 때문이다. UC 계열(양산·시작기·
+    사이코뮤)은 대기권 1 이라 날지 못하고, GN드라이브·핵동력·GUND 는 대기권 3 이다.
+    작품이 바뀌면서 기체가 날게 된 것이 수치에 그대로 남아 있다.
+
+    메운 카드에는 terrain_src 를 남긴다. 아는 값과 지어낸 값은 구분해 두어야 한다."""
+    known = [c for c in mech if "terrain" in c]
+    if not known:
+        return {}
+    axes = list(TERRAIN.values())
+    by_model, by_name = {}, {}
+    for c in known:
+        if c.get("models"):
+            by_model.setdefault(re.sub(r"[^a-z0-9]", "", c["models"].lower()), c["terrain"])
+        by_name[c["name"]] = c["terrain"]
+    by_system = {}
+    for sys_ in {c["system"] for c in known}:
+        rows = [c["terrain"] for c in known if c["system"] == sys_]
+        by_system[sys_] = {k: int(statistics.median(t[k] for t in rows)) for k in axes}
+    whole = {k: int(statistics.median(c["terrain"][k] for c in known)) for k in axes}
+
+    src = collections.Counter()
+    for c in mech:
+        if c["name"] in (override or {}):
+            c["terrain"], c["terrain_src"] = dict(override[c["name"]]), "사람"
+            src["사람"] += 1
+            continue
+        if "terrain" in c:
+            src["gge"] += 1
+            c.pop("terrain_src", None)
+            continue
+        got = how = None
+        key = re.sub(r"[^a-z0-9]", "", (c.get("models") or "").lower())
+        if key and key in by_model:
+            got, how = by_model[key], "형식번호"
+        if not got:
+            kin = [n for n in by_name
+                   if len(n) >= 3 and n != c["name"]
+                   and (c["name"].startswith(n) or n.startswith(c["name"]))]
+            if kin:
+                got, how = by_name[sorted(kin, key=len)[-1]], "이름"
+        if not got:
+            got, how = by_system.get(c["system"], whole), "계열"
+        c["terrain"], c["terrain_src"] = dict(got), how
+        src[how] += 1
+    return src
+
+
 def crosscheck(mech, pilot):
     """새로 들어온 태그와 손으로 적어 둔 값이 어긋나는 곳을 짚는다.
 
@@ -221,8 +277,13 @@ def main():
         ids = gge_m.get(c["name"])
         put(c, "gge", ids)
         got = extras(ids, units, TAG_MECH) if ids else {}
-        for k in ("rarity", "terrain", "large", "tags"):
+        for k in ("rarity", "large", "tags"):
             put(c, k, got.get(k))
+        # 지형은 아래 fill_terrain 이 도맡는다. 여기서 지웠다 채우는 것은
+        # 바뀐 것이 아니라 다시 세우는 것이라 moved 에 세지 않는다
+        c.pop("terrain", None)
+        if got.get("terrain"):
+            c["terrain"] = got["terrain"]
     for c in pilot:
         ids = gge_p.get(c["name"])
         put(c, "gge", ids)
@@ -230,10 +291,14 @@ def main():
         for k in ("rarity", "tags"):
             put(c, k, got.get(k))
 
+    # 소샤지에 없는 카드의 지형은 여기서 지어 낸다. 자리 차례를 잡기 전에 해야
+    # terrain_src 가 제자리에 들어간다
+    tsrc = fill_terrain(mech, ov.get("terrain"))
+
     # 자리 차례를 지킨다 — name, models, gge 가 앞에 오게
     order = ["name", "models", "gge", "rarity", "factions", "stats", "temper",
              "system", "psy", "series", "line", "weight", "color", "role", "gundam",
-             "large", "terrain", "tags", "lore"]
+             "large", "terrain", "terrain_src", "tags", "lore"]
     key = lambda k: (order.index(k) if k in order else len(order))   # noqa: E731
     mech = [{k: c[k] for k in sorted(c, key=key)} for c in mech]
     pilot = [{k: c[k] for k in sorted(c, key=key)} for c in pilot]
@@ -252,6 +317,7 @@ def main():
     print("         지형적성 %s · 태그 %s · 대형기 %d"
           % (cover(mech, "terrain"), cover(mech, "tags"),
              sum(1 for c in mech if c.get("large"))))
+    print("         지형 출처 — " + " · ".join("%s %d" % (k, v) for k, v in tsrc.items()))
     print("  파일럿 %d — G제네 id %s · 레어도 %s · 태그 %s"
           % (len(pilot), cover(pilot, "gge"), cover(pilot, "rarity"), cover(pilot, "tags")))
     print("  바뀐 항목 %d" % len(moved))

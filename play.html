@@ -46,6 +46,9 @@ body{
 .rd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:13px 0 9px}
 .rd>div:first-child{flex:1;min-width:0}
 .rdl{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--dim)}
+/* 전장 — 이 판의 지형. 기체 적성이 여기서 점수로 바뀐다 */
+.rdl .fld{margin-left:7px;padding:1px 6px;font-weight:700;letter-spacing:.1em;
+  color:var(--amber);border:1px solid rgba(232,161,58,.35)}
 .rdt{font-family:var(--disp);font-weight:900;font-size:15px;letter-spacing:.02em}
 .rdt em{font-style:normal;color:var(--amber)}
 .turn{font-family:var(--mono);font-size:10px;padding:3px 8px;border:1px solid var(--line);
@@ -196,6 +199,7 @@ body{
 .dinfo .r div{flex:1;min-width:0}
 /* 형식번호는 영문·숫자라 등폭이 읽기 낫다 */
 .dinfo .r div.mono{font-family:var(--mono);font-size:11px;letter-spacing:.04em}
+.dinfo .r div.terr{display:flex;flex-wrap:wrap;gap:3px 9px;font-size:10.5px;color:var(--dim)}
 .dbar{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;padding:2px 0}
 .dbar span{color:var(--dim);width:26px;flex:none}
 .dbar u{flex:1;height:5px;background:var(--plate);text-decoration:none;display:block}
@@ -509,7 +513,7 @@ function absorb(cards,row){
 }
 function mechRow(c){
   return [c.name,c.factions,c.stats[0],c.stats[1],c.stats[2],c.stats[3],
-          c.temper,c.system,c.series,c.models||""];
+          c.temper,c.system,c.series,c.models||"",c.terrain||null];
 }
 function pilotRow(c){
   return [c.name,c.factions,c.stats[0],c.stats[1],c.stats[2],c.stats[3],
@@ -772,6 +776,34 @@ var LINE={"사이코뮤":"뉴타입","핵동력":"코디네이터","GN드라이�
   "모빌트레이스":"명경지수","플래시시스템":"뉴타입","AGE시스템":"X라운더",
   "미노프스키드라이브":"뉴타입","나노스킨":"뉴타입"};
 var NTB=[-.20,.10,.18,.25];
+
+/* ═══════ 전장 ═══════
+   판마다 전장을 하나 뽑는다. 기체의 지형 적성(m[10])이 여기서 점수가 된다.
+   수상은 뽑지 않는다 — 적합한 기체가 788 중 열여섯 뿐이라 판이 안 선다.
+
+   우주와 지상은 아홉 중 아홉이 적합해서 사실상 예전 그대로 굴러가고,
+   수중은 넷 중 셋이 '보통' 이라 다 같이 굼뜬 판이 되며, 대기권은 열 중 일곱이
+   부적합이라 날 수 있는 기체를 찾는 판이 된다. 어려운 전장을 드물게 둔 것은
+   제약이 매 판 오면 제약이 아니라 세금이 되기 때문이다. */
+var FIELDS=[["우주",.34],["지상",.34],["수중",.20],["대기권",.12]];
+var FIELD="우주";
+function rollField(){
+  var r=Math.random(),i;
+  for(i=0;i<FIELDS.length;i++){r-=FIELDS[i][1];if(r<=0)return FIELD=FIELDS[i][0]}
+  return FIELD=FIELDS[0][0];
+}
+/* 적합이 기본이고 못 맞추면 깎는다. 대부분이 우주·지상에 적합하니
+   적합에 웃돈을 주면 물가만 오른다 */
+var TERR={3:0,2:-.06,1:-.18};
+function terrainOf(m){
+  var t=m[10];
+  return t&&TERR[t[FIELD]]!==undefined?TERR[t[FIELD]]:0;
+}
+function terrainWord(m){
+  var t=m[10];
+  if(!t)return "";
+  return t[FIELD]===3?"적합":t[FIELD]===1?"부적합":"보통";
+}
 /* 계통이 맞으면 온전히, 다르면 절반만. 감응이 없으면 특수기를 못 다룬다 */
 function ntBonus(p,m){
   var need=LINE[m[7]];
@@ -783,8 +815,8 @@ function overlap(a,b){for(var i=0;i<a.length;i++)if(b.indexOf(a[i])>=0)return tr
 function syncParts(m,p){
   var t=temper(m[6],p[6]), n=ntBonus(p,m),
       s=overlap(serAll(m),serAll(p))?.10:0, o=overlap(m[1],p[1])?.05:0,
-      b=BOND[p[0]+"|"+m[0]]||0;
-  return {t:t,n:n,s:s,o:o,b:b,raw:1+t+n+s+o+b,
+      b=BOND[p[0]+"|"+m[0]]||0, g=terrainOf(m);
+  return {t:t,n:n,s:s,o:o,b:b,g:g,raw:1+t+n+s+o+b+g,
     xline:!!(LINE[m[7]]&&p[7]>0&&p[9]!==LINE[m[7]])};
 }
 function sync(m,p){var r=syncParts(m,p).raw;return Math.max(.70,Math.min(1.45,r))}
@@ -1109,6 +1141,7 @@ function reset(){
   round=0;seq=order();si=0;busy=false;log=[];openFoe={};
   rerolls=REROLL_MAX;aiRR=[0,REROLL_MAX,REROLL_MAX];curPack=null;packArr=[];packType=null;discard={함:[],기체:[],파일럿:[],지휘관:[]};shown={};
   rollVariants();
+  rollField();
   render();
 }
 function order(){
@@ -1300,6 +1333,7 @@ function delta(c,type){
         else if(sp2.n<0)bits.push("감응 부재");
         if(sp2.s)bits.push("동시리즈");
         if(sp2.o)bits.push("옛소속");
+        if(sp2.g<0)bits.push(FIELD+" "+terrainWord(uu.m));
         why=(type==="기체"?uu.p[0]:uu.m[0])+" 조 · 싱크 "+sync(uu.m,uu.p).toFixed(2)+
             (bits.length?" ("+bits.join("·")+")":"");
         break;
@@ -1435,7 +1469,8 @@ function renderHead(){
     if(i<round)b.className="done";else if(i===round)b.className="now";
     g.appendChild(b);
   }
-  document.getElementById("rdl").textContent="ROUND "+String(Math.min(round+1,SCHEDULE.length)).padStart(2,"0")+" / "+SCHEDULE.length;
+  document.getElementById("rdl").innerHTML="ROUND "+String(Math.min(round+1,SCHEDULE.length)).padStart(2,"0")+
+    " / "+SCHEDULE.length+'<b class="fld">'+FIELD+"</b>";
   var done=round>=SCHEDULE.length;
   document.getElementById("rdt").innerHTML=done?"전과 <em>판정</em>"
     :TYPE_LABEL[SCHEDULE[round]].replace(/ (.+)$/," <em>$1</em>");
@@ -1900,6 +1935,12 @@ function drawOvl(){
     /* 형식번호 — 이름이 갈려도 같은 기체인지는 이걸로 가린다.
        공식 사이트에 없고 G 제네레이션에도 안 실린 기체는 비어 있다 */
     if(type==="기체"&&c[9])html+='<div class="r"><u>형식</u><div class="mono">'+c[9]+'</div></div>';
+    if(type==="기체"&&c[10]){
+      var tw=[],tk;
+      for(tk in c[10])tw.push('<span'+(tk===FIELD?' style="color:var(--amber)"':'')+'>'+
+        tk+' '+["","부적합","보통","적합"][c[10][tk]]+'</span>');
+      html+='<div class="r"><u>지형</u><div class="terr">'+tw.join("")+'</div></div>';
+    }
     if(type==="파일럿")html+='<div class="r"><u>감응</u><div>'+
       (c[7]>0?c[9]+' 등급 '+c[7]:'<span style="color:var(--dim)">없음 · 특수기 부적합</span>')+
       ' · '+c[6]+'</div></div>';

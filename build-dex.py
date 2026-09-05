@@ -247,6 +247,9 @@ main{padding:12px}
 .chip{font-size:11px;padding:3px 8px;border-radius:99px;border:1px solid var(--rule);
   color:var(--dim);letter-spacing:.02em}
 .chip.mono{font-family:var(--mono,ui-monospace,monospace);letter-spacing:.04em;opacity:.75}
+.terr{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin:2px 0 4px}
+.terr u{text-decoration:none;color:var(--dim);margin-right:5px;
+  font-family:var(--mono,ui-monospace,monospace);font-size:10px}
 .chip.f{border-color:var(--cc);color:var(--plate)}
 
 .art{position:relative;border:1px solid var(--rule);border-radius:6px;overflow:hidden;
@@ -706,6 +709,14 @@ function open(n,start){
            '<div style="margin-top:6px;opacity:.85">일상컷 복사 기록 · '+esc(u.join(", "))+'</div>':""})()+
          '<div style="margin-top:6px"><a href="prompt.html?mech='+encodeURIComponent(c[0])+
          '" target="_blank" rel="noopener">툴킷에서 열기 →</a></div></div>';
+    }
+
+    if(t==="기체"&&c[10]){
+      /* 지형 적성 — 게임 쪽은 판마다 전장을 하나 뽑아 이 값으로 점수를 깎는다 */
+      h+='<div class="sec">지형</div><div class="terr">';
+      var TW=["","부적합","보통","적합"],tk;
+      for(tk in c[10])h+='<span><u>'+esc(tk)+'</u>'+TW[c[10][tk]]+'</span>';
+      h+='</div>';
     }
 
     h+='<div class="sec">능력</div>';
