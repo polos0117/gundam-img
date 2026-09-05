@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Gundam Prompt Toolkit v9.2</title>
+<title>Gundam Prompt Toolkit v9.4</title>
 <style>
 :root{
   color-scheme:light dark;
@@ -250,13 +250,29 @@ details.mini[open]>summary{border-bottom:1px solid var(--line);color:var(--text)
   </div>
 
 
-  <div class="ver-badge">Gundam Prompt Toolkit <b>v9.2</b> <span>Morphology Mode 추가</span></div>
+  <div class="ver-badge">Gundam Prompt Toolkit <b>v9.4</b> <span>단일 컷 패널 재배치</span></div>
   <details class="srcbox verbox" id="verBox">
     <summary>
-      <span class="sel-line" style="white-space:normal;overflow:visible">v9.2 변경 내역</span>
+      <span class="sel-line" style="white-space:normal;overflow:visible">v9.4 변경 내역</span>
       <span class="sb-txt">패치 노트</span>
     </summary>
     <div class="vb-in">
+      <b>v9.4 &middot; 단일 컷 패널 재배치</b>
+      <ul>
+        <li>쓰는 빈도대로 다시 쌓았다. 랜덤 성격 셀렉트와 버튼 세 개가 맨 위로 올라오고, 카테고리 · 예시가 바로 따라온다</li>
+        <li>"랜덤으로 정할 것" 체크박스 8개를 접었다. 한 번 정하면 거의 안 건드리는데 화면 위쪽을 크게 차지하고 있었다. 접힌 채로도 <b>몇 개를 켜뒀는지</b> 요약 줄에 보인다</li>
+        <li>직접 입력 4개(장면 · 의상 · 카메라 · 추가 지시)를 한 블록으로 묶어 접었다. 값이 들어 있으면 <b>몇 개 입력됐는지</b> 요약 줄에 뜬다 — 접어둔 채로 잊고 왜 이렇게 나오는지 헤매는 일을 막는다</li>
+        <li>접힘 상태와 랜덤 대상 체크가 저장된다. 새로고침해도 펴둔 건 펴진 채로 돌아온다</li>
+      </ul>
+      <b>v9.3 &middot; 랜덤 · 화풍 라벨 정리</b>
+      <ul>
+        <li>화풍 이름을 갈랐다 — <b>세미리얼 시네마틱</b>(cinematic_semi_real) / <b>세미리얼 유화</b>(semi_real_paint). 기존 "세미리얼 페인팅 / 반실사 회화"는 서로 같은 말처럼 읽혀 구분이 안 됐다. 내부 키와 저장된 기록은 무변화</li>
+        <li>단일 컷에 자체 <b>랜덤 성격</b> 셀렉트를 붙였다. 예전에는 단일 컷 랜덤이 콜라주 패널의 셀렉트를 몰래 따라가서, 단일 패널만 보고 있으면 왜 같은 카테고리가 반복되는지 알 방법이 없었다. 기체친화형은 세 Pair 에 추천을 꽂는 모드라 단일 목록에서 뺐다</li>
+        <li>"이미 쓴 조합 피하기"도 패널별로 분리했다. 단일은 sgAvoid, 콜라주는 기존 체크박스를 각자 본다</li>
+        <li>랜덤을 굴리면 <b>카테고리 후보가 몇 종 남았는지</b> 상태줄에 찍는다. 회피를 켜두면 이미 쓴 카테고리가 빠지면서 후보가 한두 종까지 줄어드는데, 지금까지는 아무 표시가 없어 랜덤이 고장난 것처럼 보였다. 2종 이하로 줄면 경고색으로 뜬다</li>
+        <li>다양성형 설명에서 "여섯 컷" 표현을 단일 컷 목록에서만 "카테고리 전체에서 고르게"로 바꿨다. 콜라주 쪽 문구는 그대로</li>
+        <li>설정 예시 갤러리 엑박 수정 — 파일명을 카드 이름으로 조립하던 것을 실제 파일명을 쓰도록 고쳤다. 이름에 띄어쓰기가 있는 카드 76기가 전부 안 뜨던 문제</li>
+      </ul>
       <b>v9.2 &middot; Morphology Mode 추가</b>
       <ul>
         <li>의인화 탭에 Morphology Mode 셀렉트 신설 — 표준형 / 실루엣·장비 강조형 / 강변형형 3종</li>
@@ -535,8 +551,18 @@ details.mini[open]>summary{border-bottom:1px solid var(--line);color:var(--text)
     </div>
 
     <div class="form-section">
+      <select id="sgRandomMode" aria-label="랜덤 성격"></select>
+      <div class="param-actions">
+        <button id="sgRandom" type="button">🎲 전체 랜덤</button>
+        <button id="sgRandomAxis" type="button">🎲 세부 강도만 랜덤</button>
+        <button id="sgRandomSkipAxes" type="button">🎲 세부 강도 빼고 랜덤</button>
+      </div>
+      <button id="sgUndo" type="button" class="card-rnd hidden">↩ 직전 설정으로</button>
+
+      <details class="box" id="sgTgtBox" style="margin-top:8px">
+        <summary><span id="sgTgtSum">랜덤으로 정할 것</span></summary>
+        <div class="inside">
       <div class="rnd-tgt" id="sgRandomTargets">
-        <span>랜덤으로 정할 것</span>
         <label><input type="checkbox" data-srt="cat" checked><span>카테고리</span></label>
         <label><input type="checkbox" data-srt="ex" checked><span>예시</span></label>
         <label><input type="checkbox" data-srt="adv" checked><span>고급 설정</span></label>
@@ -546,12 +572,8 @@ details.mini[open]>summary{border-bottom:1px solid var(--line);color:var(--text)
         <label><input type="checkbox" data-srt="orient"><span>시점</span></label>
         <label><input type="checkbox" data-srt="pose"><span>포즈</span></label>
       </div>
-      <div class="param-actions">
-        <button id="sgRandom" type="button">🎲 전체 랜덤</button>
-        <button id="sgRandomAxis" type="button">🎲 세부 강도만 랜덤</button>
-        <button id="sgRandomSkipAxes" type="button">🎲 세부 강도 빼고 랜덤</button>
-      </div>
-      <button id="sgUndo" type="button" class="card-rnd hidden">↩ 직전 설정으로</button>
+        </div>
+      </details>
 
       <div class="field">
         <label>Category <small>카테고리</small></label>
@@ -599,26 +621,31 @@ details.mini[open]>summary{border-bottom:1px solid var(--line);color:var(--text)
           <label>Pose <small>포즈</small></label>
           <select id="sgPose"></select>
         </div>
-        <div class="field">
-          <label>Scene / Location <small>장면·장소</small></label>
-          <input id="sgScene" type="text" placeholder="AUTO">
-        </div>
-        <div class="field">
-          <label>Outfit <small>의상</small></label>
-          <input id="sgOutfit" type="text" placeholder="AUTO">
-        </div>
-        <div class="field">
-          <label>Camera / Lighting <small>카메라·조명</small></label>
-          <input id="sgCamera" type="text" placeholder="AUTO">
-        </div>
       </div>
+
+      <details class="box" id="sgTextBox" style="margin-top:9px">
+        <summary><span id="sgTextSum">직접 입력 — 장면 · 의상 · 카메라 · 추가 지시</span></summary>
+        <div class="inside">
+          <div class="field">
+            <label>Scene / Location <small>장면·장소</small></label>
+            <input id="sgScene" type="text" placeholder="AUTO">
+          </div>
+          <div class="field" style="margin-top:9px">
+            <label>Outfit <small>의상</small></label>
+            <input id="sgOutfit" type="text" placeholder="AUTO">
+          </div>
+          <div class="field" style="margin-top:9px">
+            <label>Camera / Lighting <small>카메라·조명</small></label>
+            <input id="sgCamera" type="text" placeholder="AUTO">
+          </div>
+          <div class="field" style="margin-top:9px">
+            <label>Custom Instruction <small>추가 지시</small></label>
+            <input id="sgCustom" type="text" placeholder="예: rain outside the window, warm lamp light">
+          </div>
+        </div>
+      </details>
 
       <div id="sgAdvBox" style="margin-top:9px"></div>
-
-      <div class="field" style="margin-top:9px">
-        <label>Custom Instruction <small>추가 지시</small></label>
-        <input id="sgCustom" type="text" placeholder="예: rain outside the window, warm lamp light">
-      </div>
 
 
       <div class="save-bar" style="align-items:flex-start;flex-direction:column;gap:6px;margin-top:10px">
@@ -632,7 +659,7 @@ details.mini[open]>summary{border-bottom:1px solid var(--line);color:var(--text)
         </label>
         <label style="display:flex;align-items:center;gap:7px;margin:0;cursor:pointer;font-size:11.5px">
           <input type="checkbox" id="sgAvoid" style="width:auto;margin:0;flex:none">
-          <span>이미 복사한 조합을 프롬프트에서 피하기</span>
+          <span>이미 복사한 조합 피하기 — 프롬프트 + 랜덤 카테고리</span>
         </label>
         <span class="uz">복사하면 콜라주와 같은 기록에 쌓인다. 한 장이므로 조합 하나만 적립된다.</span>
       </div>
@@ -1195,7 +1222,7 @@ details.mini[open]>summary{border-bottom:1px solid var(--line);color:var(--text)
     stable:{ko:'안정형',desc:'실패가 적은 무난한 조합',
       pool:['adult_roleplay','occupation_basic','everyday_basic','homewear','swimwear','private_evening'],
       adv:{overall_intensity:'sensual',pair_gap:'small',outfit_variety:'normal',scene_variety:'normal',pose_variety:'normal'}},
-    variety:{ko:'다양성형',desc:'여섯 컷이 서로 최대한 다르게',
+    variety:{ko:'다양성형',desc:'여섯 컷이 서로 최대한 다르게',descOne:'카테고리 전체에서 고르게',
       pool:null,
       adv:{overall_intensity:'sensual',pair_gap:'medium',outfit_variety:'extreme',scene_variety:'extreme',
            pose_variety:'extreme',camera_variety:'extreme',unexpected_cuts:'2'}},
@@ -1233,8 +1260,12 @@ details.mini[open]>summary{border-bottom:1px solid var(--line);color:var(--text)
   /* 카드 하나만 굴린다. 랜덤 대상 체크박스와 성격 풀을 그대로 따른다 */
   function rndTargets(){const T={};document.querySelectorAll('[data-rt]').forEach(el=>T[el.dataset.rt]=el.checked);return T;}
   function sgRndTargets(){const T={};document.querySelectorAll('[data-srt]').forEach(el=>T[el.dataset.srt]=el.checked);return T;}
-  function modePool(){
-    const M=RANDOM_MODES[document.getElementById('randomMode').value]||RANDOM_MODES.variety;
+  /* 콜라주와 단일 컷은 랜덤 성격을 따로 가진다. 예전에는 단일 컷이
+     콜라주 셀렉트를 몰래 따라가서, 단일 패널에서는 왜 같은 카테고리만
+     계속 나오는지 알 방법이 없었다. */
+  function modePool(scope){
+    const el=document.getElementById(scope==='single'?'sgRandomMode':'randomMode');
+    const M=RANDOM_MODES[(el&&el.value)||'']||RANDOM_MODES.variety;
     return (M.pool||RANDOM_POOL).slice();
   }
   const pickOne=a=>a[Math.floor(Math.random()*a.length)];
@@ -1244,13 +1275,15 @@ details.mini[open]>summary{border-bottom:1px solid var(--line);color:var(--text)
     if(T.orient){const o=ORIENTATION_OPTIONS.filter(x=>x[0]);idsFn('orient',pickOne(o)[0]);}
     if(T.pose){const o=POSE_OPTIONS.filter(x=>x[0]);idsFn('pose',pickOne(o)[0]);}
   }
-  function freshPool(exclude){
-    const used={}; if(document.getElementById('randomAvoidUsed').checked)
+  function freshPool(exclude,scope){
+    /* 회피 체크박스도 각 패널 것을 본다 */
+    const av=document.getElementById(scope==='single'?'sgAvoid':'randomAvoidUsed');
+    const used={}; if(av&&av.checked)
       usedOf(mechKey()).forEach(r=>used[r.cat]=1);
     /* 지금 다른 칸이 쓰고 있는 카테고리도 뺀다. 하나만 굴렸는데
        옆 Pair 와 같은 게 나오면 굴린 의미가 없다 */
     (exclude||[]).forEach(c=>{if(c)used[c]=1});
-    const p=modePool();
+    const p=modePool(scope);
     let f=p.filter(c=>!used[c]);
     if(!f.length){const u2={};(exclude||[]).forEach(c=>{if(c)u2[c]=1});f=p.filter(c=>!u2[c]);}
     return f.length?f:p;
@@ -1772,22 +1805,43 @@ details.mini[open]>summary{border-bottom:1px solid var(--line);color:var(--text)
       (flags.length?'<div class="ks-f">'+escHtml(flags.join(' · '))+'</div>':'');
   }
   let SGPREV=null;
+  /* 접어둔 블록은 안이 안 보이므로 요약 줄에 상태를 적는다.
+     안 그러면 켜둔 걸 잊고 왜 이렇게 나오는지 모르게 된다. */
+  const SG_FOLD={sgTgtBox:'tgt',sgTextBox:'text'};
+  function sgFoldSummaries(){
+    const t=document.getElementById('sgTgtSum');
+    if(t){
+      const all=[...document.querySelectorAll('[data-srt]')];
+      const on=all.filter(x=>x.checked).length;
+      t.textContent='랜덤으로 정할 것 — '+on+'/'+all.length+'개 켬';
+    }
+    const x=document.getElementById('sgTextSum');
+    if(x){
+      const ids=['sgScene','sgOutfit','sgCamera','sgCustom'];
+      const n=ids.filter(id=>{const e=document.getElementById(id);return e&&e.value.trim();}).length;
+      x.textContent='직접 입력 — 장면 · 의상 · 카메라 · 추가 지시'+(n?' · '+n+'개 입력됨':'');
+    }
+  }
   function refreshSinglePrompt(){
     const t=document.getElementById('textSingle'); if(!t)return;
     sgNotes();
+    sgFoldSummaries();
     t.value=buildSinglePrompt();
     const b2=document.getElementById('sgSum'); if(b2)b2.innerHTML=sgSummary();
     if(READY){STORE.single=snapSingle();saveStore();}
   }
   function snapSingle(){
     const o={sel:{},txt:{},axes:{}};
-    ['sgCat','sgEx','sgAspect','sgFrame','sgExpr','sgOrient','sgPose'].forEach(id=>o.sel[id]=sgVal(id));
+    ['sgCat','sgEx','sgAspect','sgFrame','sgExpr','sgOrient','sgPose','sgRandomMode'].forEach(id=>o.sel[id]=sgVal(id));
     ['sgCatCustom','sgExCustom','sgScene','sgOutfit','sgCamera','sgCustom'].forEach(id=>
       o.txt[id]=document.getElementById(id).value);
     LOCAL_AXES.forEach(k=>{const el=document.querySelector('[data-sg-axis="'+k+'"]');if(el)o.axes[k]=el.value;});
     o.carryFace=document.getElementById('sgCarryFace').checked;
     o.carryBody=document.getElementById('sgCarryBody').checked;
     o.avoid=document.getElementById('sgAvoid').checked;
+    o.tgt={}; document.querySelectorAll('[data-srt]').forEach(el=>o.tgt[el.dataset.srt]=el.checked);
+    o.open={}; Object.keys(SG_FOLD).forEach(id=>{
+      const el=document.getElementById(id); if(el)o.open[id]=el.open;});
     return o;
   }
   function applySingle(o){
@@ -1795,13 +1849,18 @@ details.mini[open]>summary{border-bottom:1px solid var(--line);color:var(--text)
     const set=(id,v)=>{const el=document.getElementById(id);
       if(el&&v!==undefined&&[...el.options].some(x=>x.value===v))el.value=v;};
     if(o.sel){set('sgCat',o.sel.sgCat);renderSgEx(false);
-      ['sgEx','sgAspect','sgFrame','sgExpr','sgOrient','sgPose'].forEach(id=>set(id,o.sel[id]));}
+      ['sgEx','sgAspect','sgFrame','sgExpr','sgOrient','sgPose','sgRandomMode'].forEach(id=>set(id,o.sel[id]));}
     Object.entries(o.txt||{}).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v||'';});
     Object.entries(o.axes||{}).forEach(([k,v])=>{const el=document.querySelector('[data-sg-axis="'+k+'"]');
       if(el&&[...el.options].some(x=>x.value===v))el.value=v;});
     if(o.carryFace!==undefined)document.getElementById('sgCarryFace').checked=!!o.carryFace;
     if(o.carryBody!==undefined)document.getElementById('sgCarryBody').checked=!!o.carryBody;
     if(o.avoid!==undefined)document.getElementById('sgAvoid').checked=!!o.avoid;
+    if(o.tgt)document.querySelectorAll('[data-srt]').forEach(el=>{
+      if(o.tgt[el.dataset.srt]!==undefined)el.checked=!!o.tgt[el.dataset.srt];});
+    if(o.open)Object.keys(SG_FOLD).forEach(id=>{
+      const el=document.getElementById(id); if(el&&o.open[id]!==undefined)el.open=!!o.open[id];});
+    sgFoldSummaries();
   }
   function sgPushUndo(){SGPREV=snapSingle();document.getElementById('sgUndo').classList.remove('hidden');}
   function sgUndo(){
@@ -1813,10 +1872,22 @@ details.mini[open]>summary{border-bottom:1px solid var(--line);color:var(--text)
   function sgRandomize(mode){  /* 'all' | 'axesOnly' | 'skipAxes' */
     sgPushUndo();
     const T=sgRndTargets(), pick=a2=>a2[Math.floor(Math.random()*a2.length)];
+    let poolNote='', narrow=false;
     if(mode!=='axesOnly'){
-      if(T.cat){const c=pick(freshPool([]));
+      if(T.cat){
+        /* 후보가 몇 종 남았는지 보여준다. 회피를 켜두면 이미 쓴 카테고리가
+           빠지면서 후보가 한두 종까지 줄어드는데, 말해주지 않으면
+           랜덤이 고장난 것처럼 보인다. */
+        const p=freshPool([],'single'), c=pick(p);
         const cs=document.getElementById('sgCat');
         if([...cs.options].some(o=>o.value===c))cs.value=c;
+        const av=document.getElementById('sgAvoid');
+        const skipped=(av&&av.checked)
+          ? Object.keys(usedOf(mechKey()).reduce((m,r)=>{if(r.cat)m[r.cat]=1;return m;},{})).length : 0;
+        const full=modePool('single').length;
+        narrow=p.length<=2&&full>2;
+        poolNote=' — 카테고리 후보 '+p.length+'/'+full+'종'+
+          (skipped&&p.length<full?' (이미 쓴 '+skipped+'종 제외 · 회피 끄면 전체)':'');
         renderSgEx(false);}
       if(T.ex){const es=document.getElementById('sgEx');
         const cand=[...es.options].map(o=>o.value).filter(v=>v&&v!=='__custom__');
@@ -1844,7 +1915,9 @@ details.mini[open]>summary{border-bottom:1px solid var(--line);color:var(--text)
       });
     }
     refreshSinglePrompt();
-    setStatus('statusSingle',mode==='axesOnly'?'세부 강도를 굴렸다':(mode==='skipAxes'?'세부 강도는 그대로 두고 나머지를 굴렸다':'단일 컷 설정을 굴렸다'),'ok');
+    setStatus('statusSingle',
+      (mode==='axesOnly'?'세부 강도를 굴렸다':(mode==='skipAxes'?'세부 강도는 그대로 두고 나머지를 굴렸다':'단일 컷 설정을 굴렸다'))+poolNote,
+      narrow?'warn':'ok');
   }
   /* 콜라주에서 방향을 찾고 단일 컷으로 마무리하는 흐름을 잇는다.
      카테고리·예시·표정·시점·포즈·세부 강도를 그대로 옮기고 단일 탭으로 넘어간다. */
@@ -4021,6 +4094,11 @@ details.mini[open]>summary{border-bottom:1px solid var(--line);color:var(--text)
   document.getElementById('randomMode').innerHTML=Object.entries(RANDOM_MODES)
     .map(([k,v])=>'<option value="'+k+'">'+escHtml(v.ko+' — '+v.desc)+'</option>').join('');
   document.getElementById('randomMode').value='variety';
+  /* 단일 컷용 성격. useRec 모드는 세 Pair 에 추천을 꽂는 방식이라 한 장짜리에는 의미가 없다 */
+  document.getElementById('sgRandomMode').innerHTML=Object.entries(RANDOM_MODES)
+    .filter(([,v])=>!v.useRec)
+    .map(([k,v])=>'<option value="'+k+'">'+escHtml(v.ko+' — '+(v.descOne||v.desc))+'</option>').join('');
+  document.getElementById('sgRandomMode').value='variety';
   renderAdvancedGrid();
   renderParamCards();
 
@@ -4107,6 +4185,12 @@ details.mini[open]>summary{border-bottom:1px solid var(--line);color:var(--text)
     document.getElementById(id).addEventListener('input',refreshSinglePrompt));
   ['sgCarryFace','sgCarryBody','sgAvoid'].forEach(id=>
     document.getElementById(id).addEventListener('change',refreshSinglePrompt));
+  /* 접힘 상태와 랜덤 대상도 저장 대상이다 — refreshSinglePrompt 가 STORE 에 넣는다 */
+  document.querySelectorAll('[data-srt]').forEach(el=>
+    el.addEventListener('change',refreshSinglePrompt));
+  Object.keys(SG_FOLD).forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.addEventListener('toggle',refreshSinglePrompt);});
   document.querySelectorAll('[data-sg-axis]').forEach(el=>
     el.addEventListener('change',refreshSinglePrompt));
   document.getElementById('sgRandom').addEventListener('click',()=>sgRandomize('all'));
